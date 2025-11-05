@@ -1,0 +1,254 @@
+================================================================================
+  HOW JAR RESOURCE OVERLAY WORKS - Visual Diagram
+================================================================================
+
+STEP 1: LANGUAGE PACK DATA STRUCTURE (Source)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+data/ru/tomcat/webapps/pentaho/WEB-INF/lib/
+│
+├── pentaho-metadata_jar/                    ← Note: "_jar" suffix
+│   └── org/
+│       └── pentaho/
+│           └── metadata/
+│               └── messages/
+│                   └── messages_ru.properties  (Russian translation)
+│
+├── pentaho-platform-core_jar/
+│   └── org/
+│       └── pentaho/
+│           └── platform/
+│               └── util/
+│                   └── messages/
+│                       └── messages_ru.properties
+│
+└── classic-core_jar/
+    └── org/
+        └── pentaho/
+            └── reporting/
+                └── engine/
+                    └── classic/
+                        └── core/
+                            └── messages/
+                                └── messages_ru.properties
+
+
+STEP 2: PENTAHO INSTALLATION BEFORE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/opt/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/
+│
+├── pentaho-metadata.jar              ← Real JAR file
+│   │   (ZIP archive containing:)
+│   └── org/pentaho/metadata/messages/
+│       ├── messages.properties       (English)
+│       ├── messages_es.properties    (Spanish)
+│       └── messages_pt_PT.properties (Portuguese)
+│                                      ❌ No Russian yet!
+│
+├── pentaho-platform-core.jar
+│   └── org/pentaho/platform/util/messages/
+│       ├── messages.properties
+│       └── messages_es.properties
+│
+└── classic-core.jar
+    └── org/pentaho/reporting/.../messages/
+        └── messages.properties
+
+
+STEP 3: INSTALLATION PROCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ./pentaho-langpack install ru --pentaho /opt/pentaho/pentaho-server
+
+    For each *_jar directory in source:
+    ┌────────────────────────────────────────────────────┐
+    │ 1. Strip "_jar" suffix                             │
+    │    "pentaho-metadata_jar" → "pentaho-metadata"     │
+    │                                                     │
+    │ 2. Create parallel directory structure             │
+    │    /lib/pentaho-metadata/                          │
+    │                                                     │
+    │ 3. Copy all files maintaining package structure    │
+    │    Copy: org/pentaho/metadata/messages/...         │
+    └────────────────────────────────────────────────────┘
+
+
+STEP 4: PENTAHO INSTALLATION AFTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/opt/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/
+│
+├── pentaho-metadata.jar                    ← Original JAR (UNCHANGED)
+│   └── org/pentaho/metadata/messages/
+│       ├── messages.properties
+│       ├── messages_es.properties
+│       └── messages_pt_PT.properties
+│
+├── pentaho-metadata/                       ← ✨ NEW DIRECTORY ✨
+│   └── org/pentaho/metadata/messages/
+│       └── messages_ru.properties          ← Russian translation
+│
+├── pentaho-platform-core.jar               ← Original JAR
+│
+├── pentaho-platform-core/                  ← ✨ NEW DIRECTORY ✨
+│   └── org/pentaho/platform/util/messages/
+│       └── messages_ru.properties
+│
+├── classic-core.jar                        ← Original JAR
+│
+└── classic-core/                           ← ✨ NEW DIRECTORY ✨
+    └── org/pentaho/reporting/.../messages/
+        └── messages_ru.properties
+
+
+STEP 5: JAVA CLASSLOADER BEHAVIOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When Java looks for: org/pentaho/metadata/messages/messages_ru.properties
+
+  Tomcat Classpath:
+  ┌─────────────────────────────────────────────────────────────┐
+  │  1. /WEB-INF/classes/                                       │
+  │  2. /WEB-INF/lib/*                                          │
+  │  3. /WEB-INF/lib/pentaho-metadata/        ← Directory       │
+  │  4. /WEB-INF/lib/pentaho-metadata.jar     ← JAR file        │
+  │  5. ...                                                     │
+  └─────────────────────────────────────────────────────────────┘
+
+  Search Process:
+  ┌────────────────────────────────────────────────────────┐
+  │ 1. Check /WEB-INF/classes/org/pentaho/metadata/...    │
+  │    → Not found                                         │
+  │                                                         │
+  │ 2. Check /WEB-INF/lib/pentaho-metadata/org/pentaho/... │
+  │    → ✅ FOUND! messages_ru.properties                  │
+  │    → Return this file                                  │
+  │    → Stop searching                                    │
+  │                                                         │
+  │ 3. (Never reaches pentaho-metadata.jar)                │
+  └────────────────────────────────────────────────────────┘
+
+  Result: Java loads Russian messages from our directory overlay!
+
+
+STEP 6: RUNTIME - USER SEES RUSSIAN UI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Java Code in Pentaho:
+  ┌──────────────────────────────────────────────────────────────┐
+  │ ResourceBundle bundle = ResourceBundle.getBundle(            │
+  │     "org.pentaho.metadata.messages.messages",                │
+  │     new Locale("ru", "RU")                                   │
+  │ );                                                            │
+  │                                                               │
+  │ String label = bundle.getString("USER_NAME_LABEL");          │
+  └──────────────────────────────────────────────────────────────┘
+
+  Loads from: /lib/pentaho-metadata/org/.../messages_ru.properties
+
+  User Interface:
+  ┌──────────────────────────────────────────────────────────────┐
+  │  Pentaho BI Server                                           │
+  │  ┌────────────────────────────────────────────────────┐     │
+  │  │  Редактор метаданных                               │     │
+  │  │                                                     │     │
+  │  │  Имя пользователя: [____________]                  │     │
+  │  │  Пароль:           [____________]                  │     │
+  │  │                                                     │     │
+  │  │         [ Войти ]    [ Отмена ]                    │     │
+  │  └────────────────────────────────────────────────────┘     │
+  └──────────────────────────────────────────────────────────────┘
+
+  ✅ Russian text loaded from our overlay directory!
+
+
+KEY CONCEPTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. NOT MODIFYING JARS
+   ❌ We don't: Unzip JAR → Add file → Rezip JAR
+   ✅ We do:    Create parallel directory structure
+
+2. CLASSLOADER ORDER
+   Directories are checked BEFORE JAR files in classpath
+   First match wins!
+
+3. _JAR SUFFIX
+   In language pack data, "_jar" tells installer:
+   "This is JAR content, handle specially"
+
+4. DIRECTORY NAMING
+   pentaho-metadata_jar → pentaho-metadata/
+   (Remove "_jar", add "/" for directory)
+
+5. PACKAGE STRUCTURE PRESERVED
+   org/pentaho/metadata/messages/messages_ru.properties
+   Same path in source and destination!
+
+6. NON-INVASIVE
+   Original JARs never modified
+   Easy rollback: just delete directories
+
+
+COMPARISON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Approach 1: Modify JAR (NOT USED)
+  ┌─────────────────────────────────────────────────────────┐
+  │ 1. Unzip pentaho-metadata.jar                           │
+  │ 2. Add messages_ru.properties to extracted files        │
+  │ 3. Re-zip into pentaho-metadata.jar                     │
+  │ 4. Replace original JAR                                 │
+  │                                                          │
+  │ Problems:                                                │
+  │ ❌ Risky (can corrupt JAR)                              │
+  │ ❌ Signature issues                                     │
+  │ ❌ Slow (unzip/rezip is expensive)                      │
+  │ ❌ Hard to rollback                                     │
+  └─────────────────────────────────────────────────────────┘
+
+Approach 2: Directory Overlay (USED!)
+  ┌─────────────────────────────────────────────────────────┐
+  │ 1. Create pentaho-metadata/ directory                   │
+  │ 2. Copy messages_ru.properties maintaining structure    │
+  │ 3. Done!                                                 │
+  │                                                          │
+  │ Benefits:                                                │
+  │ ✅ Fast (just copy files)                               │
+  │ ✅ Safe (original JAR untouched)                        │
+  │ ✅ Easy rollback (delete directory)                     │
+  │ ✅ Works perfectly with classloader                     │
+  └─────────────────────────────────────────────────────────┘
+
+
+REMOVAL PROCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ./pentaho-langpack remove ru --pentaho /opt/pentaho/pentaho-server
+
+  Removes:
+  ┌─────────────────────────────────────────────────────────┐
+  │ Find and delete:                                        │
+  │   /lib/*/org/**/messages_ru.properties                  │
+  │                                                          │
+  │ Can optionally remove entire overlay directories:       │
+  │   rm -rf /lib/pentaho-metadata/                         │
+  │   rm -rf /lib/pentaho-platform-core/                    │
+  │   rm -rf /lib/classic-core/                             │
+  └─────────────────────────────────────────────────────────┘
+
+  Result: Back to original state, JARs still intact!
+
+
+================================================================================
+  SUMMARY
+================================================================================
+
+"JAR copying" is a misnomer - we don't copy INTO jars!
+
+Instead, we create directory overlays that Java's classloader
+naturally prefers over JAR contents.
+
+Simple, safe, and effective! 🎯
+================================================================================
