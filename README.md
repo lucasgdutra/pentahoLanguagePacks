@@ -16,36 +16,62 @@ The instructions that follow are mainly directed to developers and translators.
 
 ## 🐍 Python Implementation (NEW - Pentaho 9+)
 
-**For Pentaho 9.0 and higher**, we now provide a modern **Python-based implementation** that replaces the original Kettle (kjb/ktr) approach.
+**For Pentaho 9.0 and higher**, we now provide **Python-based implementations** that replace the original Kettle (kjb/ktr) approach.
 
-### Why Python?
+### Two Options Available
 
-The Python implementation offers:
-- ✅ **Pentaho 9+ Compatibility** - No Kettle version conflicts
-- ✅ **No Kettle Dependency** - Lighter weight, faster startup
-- ✅ **Modern REST API** - Better error handling and JSON responses
-- ✅ **CLI Support** - Easy automation and scripting
-- ✅ **Same Data Format** - Uses existing language pack data
-- ✅ **Drop-in Replacement** - Works with existing dashboard
+#### 🎯 **Standalone CLI** (Simplest - Recommended for most users)
 
-### Quick Start (Python Version)
+A single-file Python script with **zero dependencies** - just run it with bash!
+
+```bash
+# Quick start
+cd langpack-installer
+
+# List available languages
+./pentaho-langpack list
+
+# Install a language pack
+./pentaho-langpack install ru --pentaho /opt/pentaho/pentaho-server
+
+# Remove a language pack
+./pentaho-langpack remove ru --pentaho /opt/pentaho/pentaho-server
+```
+
+**Perfect for:**
+- ✅ Simple installations
+- ✅ Bash scripting and automation
+- ✅ Docker containers
+- ✅ Users who want minimal complexity
+- ✅ **No pip packages required** - uses Python standard library only
+
+📖 **[Standalone CLI Documentation](langpack-installer/README.md)**
+
+#### 🚀 **Full Python Implementation** (Advanced - For production)
+
+Complete implementation with REST API and dashboard integration.
 
 ```bash
 # Install dependencies
 cd python
 pip install -r requirements.txt
 
-# List available languages
+# Use CLI
 python cli.py list
-
-# Install a language pack
 python cli.py install ru
 
-# Start REST API (for dashboard integration)
+# Or start REST API (for dashboard integration)
 python api.py
 ```
 
-For detailed documentation:
+**Perfect for:**
+- ✅ REST API endpoints
+- ✅ Dashboard integration
+- ✅ systemd service deployment
+- ✅ Production environments
+- ✅ Advanced monitoring and logging
+
+📖 **Documentation:**
 - **[Python README](python/README.md)** - Complete usage guide
 - **[Integration Guide](python/INTEGRATION.md)** - How to integrate with Pentaho
 - **[Migration Guide](python/MIGRATION_GUIDE.md)** - Migrating from Kettle version
@@ -55,7 +81,7 @@ For detailed documentation:
 | Pentaho Version | Recommended Approach |
 |----------------|---------------------|
 | **5.x - 8.x** | Original Kettle-based version (see below) |
-| **9.0+** | **Python implementation** (see `python/` directory) |
+| **9.0+** | **Standalone CLI** (`langpack-installer/`) for simple use<br>**Full Python** (`python/`) for production/API |
 
 ---
 
