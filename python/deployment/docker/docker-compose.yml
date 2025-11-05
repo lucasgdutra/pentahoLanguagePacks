@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  langpack-api:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: pentaho-langpack-api
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount language pack data
+      - ../../data:/app/data:ro
+      # Mount Pentaho installation (for writing language files)
+      - /opt/pentaho/pentaho-server:/opt/pentaho/pentaho-server
+    environment:
+      - PLUGIN_DIR=/app
+      - PENTAHO_BASE_DIR=/opt/pentaho/pentaho-server
+      - PORT=5000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/plugin/languagePackInstaller/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

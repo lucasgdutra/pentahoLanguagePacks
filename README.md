@@ -14,6 +14,55 @@ Whenever a given localisation reaches a state in which it becomes usable, trimme
 If you are **only interested in installing an existing language pack**, then you should **simply download it from the marketplace.**
 The instructions that follow are mainly directed to developers and translators.
 
+## 🐍 Python Implementation (NEW - Pentaho 9+)
+
+**For Pentaho 9.0 and higher**, we now provide a modern **Python-based implementation** that replaces the original Kettle (kjb/ktr) approach.
+
+### Why Python?
+
+The Python implementation offers:
+- ✅ **Pentaho 9+ Compatibility** - No Kettle version conflicts
+- ✅ **No Kettle Dependency** - Lighter weight, faster startup
+- ✅ **Modern REST API** - Better error handling and JSON responses
+- ✅ **CLI Support** - Easy automation and scripting
+- ✅ **Same Data Format** - Uses existing language pack data
+- ✅ **Drop-in Replacement** - Works with existing dashboard
+
+### Quick Start (Python Version)
+
+```bash
+# Install dependencies
+cd python
+pip install -r requirements.txt
+
+# List available languages
+python cli.py list
+
+# Install a language pack
+python cli.py install ru
+
+# Start REST API (for dashboard integration)
+python api.py
+```
+
+For detailed documentation:
+- **[Python README](python/README.md)** - Complete usage guide
+- **[Integration Guide](python/INTEGRATION.md)** - How to integrate with Pentaho
+- **[Migration Guide](python/MIGRATION_GUIDE.md)** - Migrating from Kettle version
+
+### Which Version Should I Use?
+
+| Pentaho Version | Recommended Approach |
+|----------------|---------------------|
+| **5.x - 8.x** | Original Kettle-based version (see below) |
+| **9.0+** | **Python implementation** (see `python/` directory) |
+
+---
+
+## Original Kettle-Based Implementation (Pentaho 5-8)
+
+The following instructions apply to the **original Kettle-based** implementation for Pentaho 5.x through 8.x.
+
 ### Disclaimer
 
 The language pack installers work by massively copying files to your Pentaho installation, eventually overwriting and patching existing files in your installation.
